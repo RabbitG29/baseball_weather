@@ -90,10 +90,26 @@ class _MyHomePageState extends State<MyHomePage> {
       longitude: "37.29",
       name: "고척 스카이돔");
 
+  String _increaseTimeBy30Minutes(String timeString) {
+    String hourString = timeString.substring(0, timeString.length - 2);
+    String minuteString = timeString.substring(timeString.length - 2);
+
+    int hour = int.parse(hourString);
+    int minute = int.parse(minuteString);
+
+    int totalMinutes = hour * 60 + minute;
+    totalMinutes += 30;
+
+    int newHour = (totalMinutes ~/ 60) % 24;
+    int newMinute = totalMinutes % 60;
+
+    return '${newHour.toString().padLeft(2, '0')}${newMinute.toString().padLeft(2, '0')}';
+  }
+
   String _parseWeatherInfos(List<dynamic> items, String baseTime) {
     Map<String, String> map = {};
     for (var item in items) {
-      if (item["baseTime"] == baseTime) {
+      if (item["fcstTime"] == _increaseTimeBy30Minutes(baseTime)) {
         map = _parseWeatherInfo(item, map);
       }
     }
@@ -174,7 +190,7 @@ class _MyHomePageState extends State<MyHomePage> {
     String result = "날씨 : ${map['SKY']}\n";
     result += "기온 : ${map['T1H']}℃\n";
     result += "강수형태 : ${map['PTY']}\n";
-    result += "1시간 내 강수량 : ${map['RN1']}mm\n";
+    result += "1시간 내 강수량 : ${map['RN1']}\n";
     result += "풍속 : ${map['WSD']}m/s\n";
     result += "습도 : ${map['REH']}%\n";
 
