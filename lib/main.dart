@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'baseball_park.dart';
 
 void main() {
@@ -10,27 +11,11 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '야구장 날씨',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a blue toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
@@ -41,15 +26,6 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
   final String title;
 
@@ -65,7 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
       latitude: "126.68",
       longitude: "37.43",
       name: "인천SSG랜더스필드");
-  BaseballPark lg_doosan = BaseballPark(
+  BaseballPark lgDoosan = BaseballPark(
       nx: "62",
       ny: "125",
       latitude: "127.05",
@@ -116,26 +92,29 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _getWeatherInfo(String nx, String ny) async {
     const endPoint =
-        "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst";
+        "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst";
     const serviceKey =
         "3gEzKN8bX4%2FcM%2FVA%2BA%2BilUk52BqnLj396LZurkEN5b7x1dVcT%2F0yOFFAiDh%2B8W6YRaVFo47g9tfSK83%2FbbuBTQ%3D%3D";
     const pageNo = "1";
-    const numOfRows = "1000";
+    const numOfRows = "60";
     const dataType = "JSON";
     DateTime now = DateTime.now().toLocal();
     String encodedMonth =
         now.month < 10 ? "0${now.month}" : now.month.toString();
     String baseDate = now.year.toString() + encodedMonth + now.day.toString();
-    String baseTime = "${now.hour - 1}00";
+    String baseTime = now.minute > 35 ? "${now.hour}30" : "${now.hour - 1}30";
     String url =
-        "$endPoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows$numOfRows&dataType=$dataType&base_date=$baseDate&base_time=$baseTime&nx=$nx&ny=$ny";
+        "$endPoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=$numOfRows&dataType=$dataType&base_date=$baseDate&base_time=$baseTime&nx=$nx&ny=$ny";
     var response = await http.get(Uri.parse(url));
     if (kDebugMode) {
+      print(url);
       print('Response body: ${response.body}');
     }
+    Map<String, dynamic> parsedJson = jsonDecode(response.body);
+    List<dynamic> items = parsedJson["response"]["body"]["items"]["item"];
     // TODO : data parsing
     setState(() {
-      weather = response.body;
+      weather = items.toString();
     });
   }
 
@@ -159,9 +138,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Text(ssg.name)),
                 ElevatedButton(
                     onPressed: () {
-                      _getWeatherInfo(lg_doosan.nx, lg_doosan.ny);
+                      _getWeatherInfo(lgDoosan.nx, lgDoosan.ny);
                     },
-                    child: Text(lg_doosan.name)),
+                    child: Text(lgDoosan.name)),
                 ElevatedButton(
                     onPressed: () {
                       _getWeatherInfo(kt.nx, kt.ny);
