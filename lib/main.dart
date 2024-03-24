@@ -90,7 +90,98 @@ class _MyHomePageState extends State<MyHomePage> {
       longitude: "37.29",
       name: "고척 스카이돔");
 
-  void _getWeatherInfo(String nx, String ny) async {
+  String _parseWeatherInfos(List<dynamic> items, String baseTime) {
+    Map<String, String> map = {};
+    for (var item in items) {
+      if (item["baseTime"] == baseTime) {
+        map = _parseWeatherInfo(item, map);
+      }
+    }
+
+    return _convertWeatherMapToString(map);
+  }
+
+  Map<String, String> _parseWeatherInfo(var item, var map) {
+    switch (item["category"]) {
+      case "T1H":
+      case "RN1":
+      case "WSD":
+      case "REH":
+        map[item["category"]] = item["fcstValue"];
+        break;
+      case "SKY":
+        map[item["category"]] = _parseSky(int.parse(item["fcstValue"]));
+        break;
+      case "PTY":
+        map[item["category"]] = _parsePty(int.parse(item["fcstValue"]));
+        break;
+      default:
+    }
+
+    return map;
+  }
+
+  String _parseSky(int sky) {
+    String result = "";
+    switch (sky) {
+      case 0:
+        result = "맑음";
+        break;
+      case 3:
+        result = "구름많음";
+        break;
+      case 4:
+        result = "흐림";
+        break;
+      default:
+    }
+    return result;
+  }
+
+  String _parsePty(int? pty) {
+    String result = "";
+    if (pty == null) {
+      return "없음";
+    }
+    switch (pty) {
+      case 0:
+        result = "없음";
+        break;
+      case 1:
+        result = "비";
+        break;
+      case 2:
+        result = "비/눈";
+        break;
+      case 3:
+        result = "눈";
+        break;
+      case 5:
+        result = "빗방울";
+        break;
+      case 6:
+        result = "빗방울눈날림";
+        break;
+      case 7:
+        result = "눈날림";
+        break;
+      default:
+    }
+    return result;
+  }
+
+  String _convertWeatherMapToString(Map<String, String> map) {
+    String result = "날씨 : ${map['SKY']}\n";
+    result += "기온 : ${map['T1H']}℃\n";
+    result += "강수형태 : ${map['PTY']}\n";
+    result += "1시간 내 강수량 : ${map['RN1']}mm\n";
+    result += "풍속 : ${map['WSD']}m/s\n";
+    result += "습도 : ${map['REH']}%\n";
+
+    return result;
+  }
+
+  void _getWeatherInfo(BaseballPark park) async {
     const endPoint =
         "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst";
     const serviceKey =
@@ -104,17 +195,17 @@ class _MyHomePageState extends State<MyHomePage> {
     String baseDate = now.year.toString() + encodedMonth + now.day.toString();
     String baseTime = now.minute > 35 ? "${now.hour}30" : "${now.hour - 1}30";
     String url =
-        "$endPoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=$numOfRows&dataType=$dataType&base_date=$baseDate&base_time=$baseTime&nx=$nx&ny=$ny";
+        "$endPoint?serviceKey=$serviceKey&pageNo=$pageNo&numOfRows=$numOfRows&dataType=$dataType&base_date=$baseDate&base_time=$baseTime&nx=${park.nx}&ny=${park.ny}";
     var response = await http.get(Uri.parse(url));
     if (kDebugMode) {
       print(url);
       print('Response body: ${response.body}');
     }
+    // TODO : exception or error response handling
     Map<String, dynamic> parsedJson = jsonDecode(response.body);
     List<dynamic> items = parsedJson["response"]["body"]["items"]["item"];
-    // TODO : data parsing
     setState(() {
-      weather = items.toString();
+      weather = "${park.name} 날씨\n${_parseWeatherInfos(items, baseTime)}";
     });
   }
 
@@ -133,17 +224,17 @@ class _MyHomePageState extends State<MyHomePage> {
               children: <Widget>[
                 ElevatedButton(
                     onPressed: () {
-                      _getWeatherInfo(ssg.nx, ssg.ny);
+                      _getWeatherInfo(ssg);
                     },
                     child: Text(ssg.name)),
                 ElevatedButton(
                     onPressed: () {
-                      _getWeatherInfo(lgDoosan.nx, lgDoosan.ny);
+                      _getWeatherInfo(lgDoosan);
                     },
                     child: Text(lgDoosan.name)),
                 ElevatedButton(
                     onPressed: () {
-                      _getWeatherInfo(kt.nx, kt.ny);
+                      _getWeatherInfo(kt);
                     },
                     child: Text(kt.name)),
               ],
@@ -153,17 +244,17 @@ class _MyHomePageState extends State<MyHomePage> {
               children: <Widget>[
                 ElevatedButton(
                     onPressed: () {
-                      _getWeatherInfo(nc.nx, nc.ny);
+                      _getWeatherInfo(nc);
                     },
                     child: Text(nc.name)),
                 ElevatedButton(
                     onPressed: () {
-                      _getWeatherInfo(kia.nx, kia.ny);
+                      _getWeatherInfo(kia);
                     },
                     child: Text(kia.name)),
                 ElevatedButton(
                     onPressed: () {
-                      _getWeatherInfo(lotte.nx, lotte.ny);
+                      _getWeatherInfo(lotte);
                     },
                     child: Text(lotte.name)),
               ],
@@ -173,17 +264,17 @@ class _MyHomePageState extends State<MyHomePage> {
               children: <Widget>[
                 ElevatedButton(
                     onPressed: () {
-                      _getWeatherInfo(samsung.nx, samsung.ny);
+                      _getWeatherInfo(samsung);
                     },
                     child: Text(samsung.name)),
                 ElevatedButton(
                     onPressed: () {
-                      _getWeatherInfo(hanhwa.nx, hanhwa.ny);
+                      _getWeatherInfo(hanhwa);
                     },
                     child: Text(hanhwa.name)),
                 ElevatedButton(
                     onPressed: () {
-                      _getWeatherInfo(kiwoom.nx, kiwoom.ny);
+                      _getWeatherInfo(kiwoom);
                     },
                     child: Text(kiwoom.name)),
               ],
