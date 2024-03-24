@@ -124,7 +124,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String _parseSky(int sky) {
     String result = "";
     switch (sky) {
-      case 0:
+      case 1:
         result = "맑음";
         break;
       case 3:
